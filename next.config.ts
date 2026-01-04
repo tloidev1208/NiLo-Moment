@@ -1,7 +1,13 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Cấu hình Webpack (nếu cần tùy chỉnh)
+  webpack: (config) => {
+    return config;
+  },
+
+  // Tắt Turbopack bằng cách cấu hình trống
+  turbopack: {},
 };
 
 export default nextConfig;
