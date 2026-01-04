@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-
+import { useRouter } from "next/navigation";
 export default function CameraView() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const router = useRouter();
 
   const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
 
@@ -50,7 +51,7 @@ export default function CameraView() {
   };
 
   return (
-    <div className="h-screen flex flex-col justify-center ">
+    <div className="h-screen flex flex-col justify-center bg-black px-5">
       {/* Camera frame */}
       <div className="flex justify-center p-1 bg-amber-50 rounded-3xl shadow-lg">
         <div className="relative w-[90vw] max-w-sm aspect-square rounded-3xl overflow-hidden">
@@ -64,8 +65,10 @@ export default function CameraView() {
       </div>
 
       {/* Controls */}
-      <div className="mt-10 flex items-center justify-around text-white">
-        <button className="text-2xl">⚡</button>
+      <div className="mt-10 flex items-center justify-around text-white bg-amber-50/10 p-4 rounded-3xl shadow-lg">
+        <button onClick={() => router.push("/gallery")} className="text-2xl">
+          🏝
+        </button>
 
         <button
           onClick={takePhoto}
