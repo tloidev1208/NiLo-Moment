@@ -1,73 +1,88 @@
 "use client";
-import { useState } from "react";
 
-// Kiểu dữ liệu cho ảnh
-type ImagePreview = string | null;
+import { useEffect, useRef, useState } from "react";
 
-const UploadPhoto = () => {
-  const [image, setImage] = useState<ImagePreview>(null);
-  const [isLoading, setIsLoading] = useState(false); // Để hiển thị trạng thái đang tải lên
+export default function CameraView() {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // Xử lý thay đổi ảnh
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    
-    if (file) {
-      // Kiểm tra nếu file là hình ảnh
-      if (file.type.startsWith("image/")) {
-        setImage(URL.createObjectURL(file));
-      } else {
-        alert("Vui lòng chọn file ảnh.");
-      }
+  const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
+
+  useEffect(() => {
+    startCamera();
+    return () => stopCamera();
+  }, [facingMode]);
+
+  const startCamera = async () => {
+    stopCamera();
+
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode },
+      audio: false,
+    });
+
+    if (videoRef.current) {
+      videoRef.current.srcObject = stream;
     }
   };
 
-  // Xử lý gửi ảnh (Upload)
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!image) return;
-
-    setIsLoading(true);
-    try {
-      // Giả lập quá trình tải lên (ở đây bạn có thể gửi file lên server hoặc cloud storage)
-      console.log("Uploading image...");
-      // Giả sử quá trình tải lên thành công
-      alert("Ảnh đã được tải lên thành công!");
-    } catch (error) {
-      alert("Có lỗi khi tải ảnh lên.");
-    } finally {
-      setIsLoading(false);
+  const stopCamera = () => {
+    if (videoRef.current?.srcObject) {
+      const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
+      tracks.forEach((t) => t.stop());
     }
+  };
+
+  const takePhoto = () => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+
+    if (!video || !canvas) return;
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    const ctx = canvas.getContext("2d");
+    ctx?.drawImage(video, 0, 0);
+
+    const imageData = canvas.toDataURL("image/jpeg");
+    console.log(imageData);
   };
 
   return (
-    <div className="flex justify-center items-center flex-col mt-8">
-      <input 
-        type="file" 
-        onChange={handleImageChange} 
-        accept="image/*" // Chỉ chấp nhận các file ảnh
-        className="mb-4 p-2 border border-gray-300 rounded"
-      />
-      
-      {image && (
-        <div className="mt-4">
-          <img 
-            src={image} 
-            alt="Preview" 
-            className="w-64 h-64 object-cover rounded-lg shadow-lg"
+    <div className="h-screen flex flex-col justify-center ">
+      {/* Camera frame */}
+      <div className="flex justify-center p-1 bg-amber-50 rounded-3xl shadow-lg">
+        <div className="relative w-[90vw] max-w-sm aspect-square rounded-3xl overflow-hidden">
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            className="w-full h-full object-cover"
           />
         </div>
-      )}
-      
-      <button 
-        onClick={handleSubmit} 
-        disabled={isLoading} // Vô hiệu hóa nút khi đang tải lên
-        className="mt-4 p-2 bg-blue-500 text-white rounded disabled:bg-gray-300"
-      >
-        {isLoading ? "Đang tải lên..." : "Tải ảnh lên"}
-      </button>
+      </div>
+
+      {/* Controls */}
+      <div className="mt-10 flex items-center justify-around text-white">
+        <button className="text-2xl">⚡</button>
+
+        <button
+          onClick={takePhoto}
+          className="w-16 h-16 rounded-full bg-white border-4 border-gray-400"
+        />
+
+        <button
+          onClick={() =>
+            setFacingMode((p) => (p === "user" ? "environment" : "user"))
+          }
+          className="text-2xl"
+        >
+          🔄
+        </button>
+      </div>
+
+      <canvas ref={canvasRef} className="hidden" />
     </div>
   );
-};
-
-export default UploadPhoto;
+}
